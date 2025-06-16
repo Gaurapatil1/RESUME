@@ -3,21 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Extractor</title>
+    <title>Resume Analyzer</title>
+    <link rel="stylesheet" href="style.css"> <!-- Link to the CSS file -->
 </head>
 <body>
-    <h1>Upload PDF and Extract Text</h1>
-    <input type="file" id="pdfFile" accept="application/pdf">
-    <button id="uploadButton">Upload and Extract</button>
-    <pre id="output"></pre>
+    <div class="container">
+        <h1>Resume Analyzer</h1>
+        <p>Upload your resume to analyze and predict job roles.</p>
+        <input type="file" id="resumeFile" accept="application/pdf">
+        <button id="analyzeButton">Analyze Resume</button>
+        <h2>Extracted Text:</h2>
+        <pre id="output"></pre>
+        <h2>Predicted Job Roles:</h2>
+        <ul id="predictedJobs"></ul>
+    </div>
 
     <script>
-        document.getElementById("uploadButton").addEventListener("click", async () => {
-            const fileInput = document.getElementById("pdfFile");
+        document.getElementById("analyzeButton").addEventListener("click", async () => {
+            const fileInput = document.getElementById("resumeFile");
             const file = fileInput.files[0];
 
             if (!file) {
-                alert("Please select a PDF file to upload.");
+                alert("Please select a resume file to upload.");
                 return;
             }
 
@@ -25,22 +32,30 @@
             formData.append("file", file);
 
             try {
-    const response = await fetch("http://127.0.0.1:8000/extract-pdf", {
-        method: "POST",
-        body: formData,
-    });
+                const response = await fetch("http://127.0.0.1:8000/analyze-resume", {
+                    method: "POST",
+                    body: formData,
+                });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to extract text from PDF.");
-    }
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || "Failed to analyze the resume.");
+                }
 
-    const result = await response.json();
-    document.getElementById("output").textContent = result.content;
-} catch (error) {
-    console.error(error);
-    alert(`An error occurred: ${error.message}`);
-}
+                const result = await response.json();
+                document.getElementById("output").textContent = result.extracted_text;
+
+                const predictedJobsList = document.getElementById("predictedJobs");
+                predictedJobsList.innerHTML = "";
+                result.predicted_jobs.forEach(job => {
+                    const li = document.createElement("li");
+                    li.textContent = job;
+                    predictedJobsList.appendChild(li);
+                });
+            } catch (error) {
+                console.error(error);
+                alert(`An error occurred: ${error.message}`);
+            }
         });
     </script>
 </body>
