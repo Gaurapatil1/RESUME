@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Extractor</title>
+</head>
+<body>
+    <h1>Upload PDF and Extract Text</h1>
+    <input type="file" id="pdfFile" accept="application/pdf">
+    <button id="uploadButton">Upload and Extract</button>
+    <pre id="output"></pre>
+
+    <script>
+        document.getElementById("uploadButton").addEventListener("click", async () => {
+            const fileInput = document.getElementById("pdfFile");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select a PDF file to upload.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+    const response = await fetch("http://127.0.0.1:8000/extract-pdf", {
+        method: "POST",
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to extract text from PDF.");
+    }
+
+    const result = await response.json();
+    document.getElementById("output").textContent = result.content;
+} catch (error) {
+    console.error(error);
+    alert(`An error occurred: ${error.message}`);
+}
+        });
+    </script>
+</body>
+</html>
