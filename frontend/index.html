@@ -3,54 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Analyzer</title>
+    <title>Advanced Resume Analyzer</title>
     <link rel="stylesheet" href="style.css"> <!-- Link to the CSS file -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>Resume Analyzer</h1>
-        <p>Upload your resume to analyze and predict job roles.</p>
-        <input type="file" id="resumeFile" accept="application/pdf">
-        <button id="analyzeButton">Analyze Resume</button>
-        <h2>Extracted Text:</h2>
-        <pre id="output"></pre>
-        <h2>Predicted Job Roles:</h2>
-        <ul id="predictedJobs"></ul>
-    </div>
+    <header>
+        <div class="header-container">
+            <h1>Resume Analyzer</h1>
+            <p>Upload multiple resumes to analyze and predict job roles with ATS scores.</p>
+        </div>
+    </header>
+    <main>
+        <div class="upload-container">
+            <label for="resumeFiles" class="upload-label">
+                <span>Choose Resumes</span>
+                <input type="file" id="resumeFiles" accept="application/pdf" multiple>
+            </label>
+            <button id="analyzeButton" class="analyze-button">Analyze Resumes</button>
+        </div>
+        <div id="results" class="results-container"></div>
+    </main>
+    <footer>
+        <p>&copy; 2023 Resume Analyzer. All rights reserved.</p>
+    </footer>
 
     <script>
         document.getElementById("analyzeButton").addEventListener("click", async () => {
-            const fileInput = document.getElementById("resumeFile");
-            const file = fileInput.files[0];
+            const fileInput = document.getElementById("resumeFiles");
+            const files = fileInput.files;
 
-            if (!file) {
-                alert("Please select a resume file to upload.");
+            if (files.length === 0) {
+                alert("Please select at least one resume file to upload.");
                 return;
             }
 
             const formData = new FormData();
-            formData.append("file", file);
+            for (const file of files) {
+                formData.append("files", file);
+            }
 
             try {
-                const response = await fetch("http://127.0.0.1:8000/analyze-resume", {
+                const response = await fetch("http://127.0.0.1:8000/analyze-resumes", {
                     method: "POST",
                     body: formData,
                 });
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.detail || "Failed to analyze the resume.");
+                    throw new Error(error.detail || "Failed to analyze the resumes.");
                 }
 
-                const result = await response.json();
-                document.getElementById("output").textContent = result.extracted_text;
+                const results = await response.json();
+                const resultsDiv = document.getElementById("results");
+                resultsDiv.innerHTML = "";
 
-                const predictedJobsList = document.getElementById("predictedJobs");
-                predictedJobsList.innerHTML = "";
-                result.predicted_jobs.forEach(job => {
-                    const li = document.createElement("li");
-                    li.textContent = job;
-                    predictedJobsList.appendChild(li);
+                results.forEach(result => {
+                    const resultDiv = document.createElement("div");
+                    resultDiv.classList.add("result-card");
+
+                    if (result.error) {
+                        resultDiv.innerHTML = `<h3>${result.filename}</h3><p>Error: ${result.error}</p>`;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <h3>${result.filename}</h3>
+                            <p><strong>Extracted Text:</strong></p>
+                            <pre>${result.extracted_text}</pre>
+                            <p><strong>Predicted Job Roles:</strong> ${result.predicted_jobs.join(", ")}</p>
+                            <p><strong>ATS Score:</strong> ${result.ats_score}</p>
+                        `;
+                    }
+
+                    resultsDiv.appendChild(resultDiv);
                 });
             } catch (error) {
                 console.error(error);
