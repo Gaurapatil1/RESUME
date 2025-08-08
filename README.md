@@ -56,3 +56,5 @@ The Resume Analyzer project allows users to upload their resumes in PDF format. 
 1. Install dependencies:
    ```bash
    pip install fastapi uvicorn fitz
+
+8 Aug commit changes 
